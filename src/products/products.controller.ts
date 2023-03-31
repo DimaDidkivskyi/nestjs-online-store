@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductDto } from './dto/product.dto';
@@ -15,8 +16,8 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  async findProducts() {
-    return await this.productsService.findProducts();
+  async findProducts(@Query() query) {
+    return await this.productsService.findProducts(query);
   }
 
   @Get('/:id')

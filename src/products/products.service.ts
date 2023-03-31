@@ -5,15 +5,63 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findProducts() {
+  async findProducts(query) {
     try {
-      return await this.prisma.product.findMany();
+      const orderParam = this.getOrderParam(query);
+      const filterParam = this.getFilterParam(query);
+
+      const products = await this.prisma.product.findMany({
+        where: { AND: filterParam },
+        orderBy: orderParam,
+      });
+
+      return products;
     } catch (error) {
       throw new HttpException(
         'Unexpected error occurred',
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  private getOrderParam(query) {
+    let orderBy: object;
+
+    if ('sort' in query) {
+      switch (query.sort) {
+        case 'cheap':
+          orderBy = { price: 'asc' };
+          break;
+
+        case 'expensive':
+          orderBy = { price: 'desc' };
+          break;
+
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+
+        case 'oldest':
+          orderBy = { createdAt: 'asc' };
+          break;
+      }
+    }
+
+    return orderBy;
+  }
+
+  private getFilterParam(query) {
+    const filterParamList = [];
+
+    if ('price' in query) {
+      filterParamList.push({ price: +query.price });
+    }
+
+    if ('category' in query) {
+      filterParamList.push({ category: query.category });
+    }
+
+    return filterParamList;
   }
 
   async findProduct(id) {
