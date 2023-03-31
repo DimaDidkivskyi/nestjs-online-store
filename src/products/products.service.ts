@@ -33,7 +33,7 @@ export class ProductsService {
 
   async createProduct(productData) {
     try {
-      return await this.prisma.product.create({ ...productData });
+      return await this.prisma.product.create({ data: { ...productData } });
     } catch (error) {
       throw new HttpException(
         'Unexpected error occurred',
