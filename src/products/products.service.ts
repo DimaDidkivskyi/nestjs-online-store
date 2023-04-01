@@ -7,16 +7,26 @@ export class ProductsService {
 
   async findProducts(query) {
     try {
+      let productsPage = 0;
+
+      if ('page' in query) {
+        productsPage = query.page * 10;
+      }
+
       const orderParam = this.getOrderParam(query);
       const filterParam = this.getFilterParam(query);
 
       const products = await this.prisma.product.findMany({
         where: { AND: filterParam },
         orderBy: orderParam,
+        skip: productsPage,
+        take: 10,
       });
 
       return products;
     } catch (error) {
+      console.log(error);
+
       throw new HttpException(
         'Unexpected error occurred',
         HttpStatus.BAD_REQUEST,

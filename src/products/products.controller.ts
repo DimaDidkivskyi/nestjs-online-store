@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { ProductDto } from './dto/product.dto';
+import { CreateProductDto, UpdateProductDto } from './dto';
 
 @Controller('products')
 export class ProductsController {
@@ -26,13 +26,16 @@ export class ProductsController {
   }
 
   @Post()
-  async createProduct(@Body() productDto: ProductDto) {
-    return await this.productsService.createProduct(productDto);
+  async createProduct(@Body() createProductDto: CreateProductDto) {
+    return await this.productsService.createProduct(createProductDto);
   }
 
   @Patch('/:id')
-  async updateProduct(@Param('id') id: string, @Body() productDto: ProductDto) {
-    return await this.productsService.updateProduct(id, productDto);
+  async updateProduct(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    return await this.productsService.updateProduct(id, updateProductDto);
   }
 
   @Delete('/:id')
