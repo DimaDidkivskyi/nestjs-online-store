@@ -22,3 +22,15 @@ model Product{
   price Int
   image String?
 }
+
+model User{
+  user_id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  name String?
+  surname String?
+  email String
+  password String
+  phone_number String?
+}
