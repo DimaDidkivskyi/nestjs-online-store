@@ -7,10 +7,10 @@ export class ProductsService {
 
   async findProducts(query) {
     try {
-      let productsPage = 0;
+      let skipProducts = 0;
 
       if ('page' in query) {
-        productsPage = query.page * 10;
+        skipProducts = (query.page - 1) * 10;
       }
 
       const orderParam = this.getOrderParam(query);
@@ -19,7 +19,7 @@ export class ProductsService {
       const products = await this.prisma.product.findMany({
         where: { AND: filterParam },
         orderBy: orderParam,
-        skip: productsPage,
+        skip: skipProducts,
         take: 10,
       });
 
