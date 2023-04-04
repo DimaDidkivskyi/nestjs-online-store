@@ -30,7 +30,8 @@ model User{
 
   name String?
   surname String?
-  email String
+  email String @unique
   password String
   phone_number String?
+  role String @default("customer")
 }
