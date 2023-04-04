@@ -1,8 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findUsers(query) {
     try {
@@ -78,6 +83,10 @@ export class UsersService {
     return orderBy;
   }
 
+  async findUser(submittedEmail) {
+    return this.prisma.user.findFirst({ where: { email: submittedEmail } });
+  }
+
   async createUser(createUserDto) {
     try {
       const createUser = await this.prisma.user.create({
@@ -86,9 +95,8 @@ export class UsersService {
 
       return createUser;
     } catch (error) {
-      throw new HttpException(
+      throw new BadRequestException(
         'Unexpected error occurred during during user creation',
-        HttpStatus.BAD_REQUEST,
       );
     }
   }
