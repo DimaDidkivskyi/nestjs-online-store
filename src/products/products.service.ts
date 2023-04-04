@@ -1,12 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
+import { Product } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findProducts(query) {
+  async findProducts(query): Promise<Product[]> {
     try {
       let skipProducts = 0;
 
@@ -75,7 +76,7 @@ export class ProductsService {
     return filterParamList;
   }
 
-  async findProduct(id: string) {
+  async findProduct(id: string): Promise<Product> {
     try {
       return await this.prisma.product.findFirst({
         where: {
@@ -90,7 +91,7 @@ export class ProductsService {
     }
   }
 
-  async createProduct(productData: CreateProductDto) {
+  async createProduct(productData: CreateProductDto): Promise<Product> {
     try {
       return await this.prisma.product.create({ data: { ...productData } });
     } catch (error) {
@@ -101,7 +102,10 @@ export class ProductsService {
     }
   }
 
-  async updateProduct(id: string, updateData: UpdateProductDto) {
+  async updateProduct(
+    id: string,
+    updateData: UpdateProductDto,
+  ): Promise<Product> {
     try {
       return await this.prisma.product.update({
         where: { product_id: id },
@@ -115,7 +119,7 @@ export class ProductsService {
     }
   }
 
-  async deleteProduct(id: string) {
+  async deleteProduct(id: string): Promise<Product> {
     try {
       return await this.prisma.product.delete({ where: { product_id: id } });
     } catch (error) {

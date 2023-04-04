@@ -4,12 +4,15 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { CreateUserDto } from 'src/auth/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findUsers(query) {
+  // Get all users matching the filter parametrs
+  async findUsers(query): Promise<User[]> {
     try {
       let skipUsers = 0;
 
@@ -36,6 +39,7 @@ export class UsersService {
     }
   }
 
+  // Get filter param from query to filter the list of user
   getFilterParam(query) {
     const filterParam = [];
 
@@ -58,6 +62,7 @@ export class UsersService {
     return filterParam;
   }
 
+  // Get the sort param from query to sort the list of users
   getOrderParam(query) {
     let orderBy: object;
 
@@ -83,11 +88,12 @@ export class UsersService {
     return orderBy;
   }
 
-  async findUser(submittedEmail) {
+  // Find user by email
+  async findUser(submittedEmail): Promise<User> {
     return this.prisma.user.findFirst({ where: { email: submittedEmail } });
   }
 
-  async createUser(createUserDto) {
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
       const createUser = await this.prisma.user.create({
         data: { ...createUserDto },

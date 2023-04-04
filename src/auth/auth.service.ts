@@ -19,7 +19,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async signIn(body: AuthUserDto) {
+  async signIn(body: AuthUserDto): Promise<{ access_token: string }> {
     try {
       const user = await this.usersService.findUser(body.email);
 
@@ -27,13 +27,13 @@ export class AuthService {
         throw new NotFoundException(`User with email: ${body.email} not found`);
       }
 
-      const hashPassword = await bcrypt.hash(body.password, 0);
+      const hashPassword = await bcrypt.hash(body.password, 10);
 
       if (await bcrypt.compare(hashPassword, user.password)) {
         throw new UnauthorizedException('Password is incorrect');
       }
 
-      return await this.signTokken(user.user_id, user.email);
+      return await this.signToken(user.user_id, user.email);
     } catch (error) {
       console.log(error);
 
@@ -50,13 +50,13 @@ export class AuthService {
         password: hashedPassword,
       });
 
-      return createUser;
+      return await this.signToken(createUser.user_id, createUser.email);
     } catch (error) {
       throw new BadRequestException('Unexpected error while creating profile');
     }
   }
 
-  async signTokken(
+  async signToken(
     user_id: string,
     email: string,
   ): Promise<{ access_token: string }> {
