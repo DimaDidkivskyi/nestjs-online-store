@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateProductDto, UpdateProductDto } from './dto';
 
 @Injectable()
 export class ProductsService {
@@ -74,7 +75,7 @@ export class ProductsService {
     return filterParamList;
   }
 
-  async findProduct(id) {
+  async findProduct(id: string) {
     try {
       return await this.prisma.product.findFirst({
         where: {
@@ -89,7 +90,7 @@ export class ProductsService {
     }
   }
 
-  async createProduct(productData) {
+  async createProduct(productData: CreateProductDto) {
     try {
       return await this.prisma.product.create({ data: { ...productData } });
     } catch (error) {
@@ -100,7 +101,7 @@ export class ProductsService {
     }
   }
 
-  async updateProduct(id, updateData) {
+  async updateProduct(id: string, updateData: UpdateProductDto) {
     try {
       return await this.prisma.product.update({
         where: { product_id: id },
@@ -114,7 +115,7 @@ export class ProductsService {
     }
   }
 
-  async deleteProduct(id) {
+  async deleteProduct(id: string) {
     try {
       return await this.prisma.product.delete({ where: { product_id: id } });
     } catch (error) {
