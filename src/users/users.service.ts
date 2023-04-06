@@ -4,15 +4,20 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { CreateUserDto } from 'src/auth/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UpdateUserDto } from './dto';
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  // Get all users matching the filter parametrs
-  async findUsers(query): Promise<User[]> {
+  // Funtion to find all users based on filter and order params
+  async findUsers(query) {
     try {
       let skipUsers = 0;
 
@@ -25,6 +30,13 @@ export class UsersService {
 
       const usersList = await this.prisma.user.findMany({
         where: { AND: filterParam },
+        select: {
+          user_id: true,
+          email: true,
+          name: true,
+          surname: true,
+          role: true,
+        },
         orderBy: orderParam,
         skip: skipUsers,
         take: 10,
@@ -39,7 +51,7 @@ export class UsersService {
     }
   }
 
-  // Get filter param from query to filter the list of user
+  // Getting filter param from query to filter the list of user
   getFilterParam(query) {
     const filterParam = [];
 
@@ -62,7 +74,7 @@ export class UsersService {
     return filterParam;
   }
 
-  // Get the sort param from query to sort the list of users
+  // Getting the sort param from query to sort the list of users
   getOrderParam(query) {
     let orderBy: object;
 
@@ -88,16 +100,19 @@ export class UsersService {
     return orderBy;
   }
 
-  // Find user by email
-  async findUser(submittedEmail): Promise<User> {
+  // Function to find user by email
+  async findUserByEmail(submittedEmail): Promise<User> {
     return this.prisma.user.findFirst({ where: { email: submittedEmail } });
   }
 
+  // Funtion to create user
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
       const createUser = await this.prisma.user.create({
         data: { ...createUserDto },
       });
+
+      delete createUser.password;
 
       return createUser;
     } catch (error) {
@@ -107,17 +122,20 @@ export class UsersService {
     }
   }
 
-  //   async updateUser(updateUserDto) {
-  //     // const updateUser = await this.prisma.user.update({
-  //     //   data: { ...updateUserDto },
-  //     // });
-  //     try {
-  //       return 'User updated';
-  //     } catch (error) {
-  //       throw new HttpException(
-  //         'Unexpected error occurred during user updating',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-  //   }
+  // Function to update user information
+  async updateUserInfo(userInfo, updateUserDto: UpdateUserDto): Promise<User> {
+    try {
+      const updateUser = await this.prisma.user.update({
+        where: { user_id: userInfo.user_id },
+        data: { ...updateUserDto },
+      });
+
+      return updateUser;
+    } catch (error) {
+      throw new HttpException(
+        'Unexpected error occurred during user updating',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }

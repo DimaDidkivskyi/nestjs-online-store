@@ -7,6 +7,7 @@ import { Product } from '@prisma/client';
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Funtion to find all products based on filter and order param
   async findProducts(query): Promise<Product[]> {
     try {
       let skipProducts = 0;
@@ -36,6 +37,7 @@ export class ProductsService {
     }
   }
 
+  // Getting order param to sort list of products
   private getOrderParam(query) {
     let orderBy: object;
 
@@ -62,6 +64,7 @@ export class ProductsService {
     return orderBy;
   }
 
+  // Getting filter param to filter products list
   private getFilterParam(query) {
     const filterParamList = [];
 
@@ -76,6 +79,7 @@ export class ProductsService {
     return filterParamList;
   }
 
+  // Funtion to find one product by product id
   async findProduct(id: string): Promise<Product> {
     try {
       return await this.prisma.product.findFirst({
@@ -91,6 +95,7 @@ export class ProductsService {
     }
   }
 
+  // Funtion to create a product
   async createProduct(productData: CreateProductDto): Promise<Product> {
     try {
       return await this.prisma.product.create({ data: { ...productData } });
@@ -102,6 +107,7 @@ export class ProductsService {
     }
   }
 
+  // Function to update a product
   async updateProduct(
     id: string,
     updateData: UpdateProductDto,
@@ -119,6 +125,7 @@ export class ProductsService {
     }
   }
 
+  // Funtion to delete product
   async deleteProduct(id: string): Promise<Product> {
     try {
       return await this.prisma.product.delete({ where: { product_id: id } });

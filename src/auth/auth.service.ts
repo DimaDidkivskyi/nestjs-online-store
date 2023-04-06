@@ -19,9 +19,10 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
+  // Authorization function
   async signIn(body: AuthUserDto): Promise<{ access_token: string }> {
     try {
-      const user = await this.usersService.findUser(body.email);
+      const user = await this.usersService.findUserByEmail(body.email);
 
       if (!user) {
         throw new NotFoundException(`User with email: ${body.email} not found`);
@@ -41,6 +42,7 @@ export class AuthService {
     }
   }
 
+  // Registration function
   async signUp(body: CreateUserDto) {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
@@ -56,6 +58,7 @@ export class AuthService {
     }
   }
 
+  // Function to craete access token
   async signToken(
     user_id: string,
     email: string,
@@ -63,7 +66,7 @@ export class AuthService {
     const payload = { email: email, sub: user_id };
 
     const token = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '7d',
       secret: this.configService.get('JWT_SECRET'),
     });
 
