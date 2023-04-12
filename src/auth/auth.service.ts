@@ -1,20 +1,21 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
 import { AuthUserDto } from './dto/authUser.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './dto';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -22,7 +23,9 @@ export class AuthService {
   // Authorization function
   async signIn(body: AuthUserDto): Promise<{ access_token: string }> {
     try {
-      const user = await this.usersService.findUserByEmail(body.email);
+      const user = await this.prismaService.user.findUnique({
+        where: { email: body.email },
+      });
 
       if (!user) {
         throw new NotFoundException(`User with email: ${body.email} not found`);
@@ -34,7 +37,11 @@ export class AuthService {
         throw new UnauthorizedException('Password is incorrect');
       }
 
-      return await this.signToken(user.user_id, user.email);
+      const tokens = await this.signToken(user.user_id, user.email);
+
+      await this.updateUserRt(user.user_id, tokens.refresh_token);
+
+      return tokens;
     } catch (error) {
       console.log(error);
 
@@ -47,29 +54,82 @@ export class AuthService {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
 
-      const createUser = await this.usersService.createUser({
-        ...body,
-        password: hashedPassword,
+      const createUser = await this.prismaService.user.create({
+        data: {
+          ...body,
+          password: hashedPassword,
+        },
       });
 
-      return await this.signToken(createUser.user_id, createUser.email);
+      const tokens = await this.signToken(createUser.user_id, createUser.email);
+
+      await this.updateUserRt(createUser.user_id, tokens.refresh_token);
+
+      return tokens;
     } catch (error) {
       throw new BadRequestException('Unexpected error while creating profile');
     }
   }
 
-  // Function to craete access token
-  async signToken(
-    user_id: string,
-    email: string,
-  ): Promise<{ access_token: string }> {
-    const payload = { email: email, sub: user_id };
-
-    const token = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
-      secret: this.configService.get('JWT_SECRET'),
+  async refreshToken(userId: string, refreshToken: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { user_id: userId },
     });
 
-    return { access_token: token };
+    if (!user) {
+      throw new ForbiddenException('Access denied 1');
+    }
+
+    console.log(refreshToken);
+
+    const rtMatches = await bcrypt.compare(refreshToken, user.refresh_token);
+
+    if (!rtMatches) {
+      throw new ForbiddenException('Access denied 2');
+    }
+
+    const tokens = await this.signToken(user.user_id, user.email);
+
+    await this.updateUserRt(user.user_id, tokens.refresh_token);
+
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.prismaService.user.updateMany({
+      where: { user_id: userId, refresh_token: { not: null } },
+      data: { refresh_token: null },
+    });
+  }
+
+  // Function to craete access and refresh tokens
+  async signToken(
+    userId: string,
+    email: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    const payload = { email: email, sub: userId };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('ACCESS_TOKEN_EXPIRATION'),
+        secret: this.configService.get('ACCESS_TOKEN_SECRET'),
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION'),
+        secret: this.configService.get('REFRESH_TOKEN_SECRET'),
+      }),
+    ]);
+    return { access_token: accessToken, refresh_token: refreshToken };
+  }
+
+  async updateUserRt(userId: string, refreshToken: string) {
+    const hashedRt = await bcrypt.hash(refreshToken, 10);
+
+    const updateUser = await this.prismaService.user.update({
+      where: { user_id: userId },
+      data: { refresh_token: hashedRt },
+    });
+
+    return updateUser;
   }
 }
