@@ -1,12 +1,6 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { CreateUserDto } from 'src/auth/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto';
 @Injectable()
@@ -100,33 +94,27 @@ export class UsersService {
     return orderBy;
   }
 
-  // Function to find user by email
-  async findUserByEmail(submittedEmail): Promise<User> {
-    return this.prisma.user.findFirst({ where: { email: submittedEmail } });
-  }
-
-  // Funtion to create user
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    try {
-      const createUser = await this.prisma.user.create({
-        data: { ...createUserDto },
-      });
-
-      delete createUser.password;
-
-      return createUser;
-    } catch (error) {
-      throw new BadRequestException(
-        'Unexpected error occurred during during user creation',
-      );
-    }
+  async findUserProfile(userId: string) {
+    return await this.prisma.user.findFirst({
+      where: { user_id: userId },
+      select: {
+        name: true,
+        surname: true,
+        email: true,
+        user_id: true,
+        phone_number: true,
+      },
+    });
   }
 
   // Function to update user information
-  async updateUserInfo(userInfo, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateUserInfo(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     try {
       const updateUser = await this.prisma.user.update({
-        where: { user_id: userInfo.user_id },
+        where: { user_id: userId },
         data: { ...updateUserDto },
       });
 

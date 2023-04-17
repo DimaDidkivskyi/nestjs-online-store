@@ -34,4 +34,5 @@ model User{
   password String
   phone_number String?
   role String @default("customer")
+  refresh_token String?
 }
