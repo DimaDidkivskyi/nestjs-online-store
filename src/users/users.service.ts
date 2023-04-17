@@ -95,25 +95,17 @@ export class UsersService {
   }
 
   async findUserProfile(userId: string) {
-    return await this.prisma.user.findUnique({ where: { user_id: userId } });
+    return await this.prisma.user.findFirst({
+      where: { user_id: userId },
+      select: {
+        name: true,
+        surname: true,
+        email: true,
+        user_id: true,
+        phone_number: true,
+      },
+    });
   }
-
-  // // Funtion to create user
-  // async createUser(createUserDto: CreateUserDto): Promise<User> {
-  //   try {
-  //     const createUser = await this.prisma.user.create({
-  //       data: { ...createUserDto },
-  //     });
-
-  //     delete createUser.password;
-
-  //     return createUser;
-  //   } catch (error) {
-  //     throw new BadRequestException(
-  //       'Unexpected error occurred during during user creation',
-  //     );
-  //   }
-  // }
 
   // Function to update user information
   async updateUserInfo(
