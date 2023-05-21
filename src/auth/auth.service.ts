@@ -37,7 +37,7 @@ export class AuthService {
         throw new UnauthorizedException('Password is incorrect');
       }
 
-      const tokens = await this.signToken(user.user_id, user.email);
+      const tokens = await this.signToken(user.user_id, user.email, user.role);
 
       await this.updateUserRt(user.user_id, tokens.refresh_token);
 
@@ -61,12 +61,17 @@ export class AuthService {
         },
       });
 
-      const tokens = await this.signToken(createUser.user_id, createUser.email);
+      const tokens = await this.signToken(
+        createUser.user_id,
+        createUser.email,
+        createUser.role,
+      );
 
       await this.updateUserRt(createUser.user_id, tokens.refresh_token);
 
       return tokens;
     } catch (error) {
+      console.log(error);
       throw new BadRequestException('Unexpected error while creating profile');
     }
   }
@@ -88,7 +93,7 @@ export class AuthService {
       throw new ForbiddenException('Access denied 2');
     }
 
-    const tokens = await this.signToken(user.user_id, user.email);
+    const tokens = await this.signToken(user.user_id, user.email, user.role);
 
     await this.updateUserRt(user.user_id, tokens.refresh_token);
 
@@ -106,8 +111,9 @@ export class AuthService {
   async signToken(
     userId: string,
     email: string,
+    role: string,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    const payload = { email: email, sub: userId };
+    const payload = { email: email, roles: role, sub: userId };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {

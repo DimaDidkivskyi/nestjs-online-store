@@ -13,8 +13,8 @@ import { ProductsService } from './products.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { Roles } from 'src/auth/role_authorization/role.decorator';
 import { Role } from 'src/auth/role_authorization/role.enum';
-import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from 'src/auth/role_authorization/roles.guard';
+import { AccessTokenGuard } from 'src/common/guards';
 
 @Controller('products')
 export class ProductsController {
@@ -32,14 +32,14 @@ export class ProductsController {
 
   @Post()
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  @UseGuards(AccessTokenGuard, RoleGuard)
   async createProduct(@Body() createProductDto: CreateProductDto) {
     return await this.productsService.createProduct(createProductDto);
   }
 
   @Patch('/:id')
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  @UseGuards(AccessTokenGuard, RoleGuard)
   async updateProduct(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -49,7 +49,7 @@ export class ProductsController {
 
   @Delete('/:id')
   @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  @UseGuards(AccessTokenGuard, RoleGuard)
   async deleteProduct(@Param('id') id: string) {
     return await this.productsService.deleteProduct(id);
   }
